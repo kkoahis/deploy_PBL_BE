@@ -25,7 +25,7 @@ class PaymentFactory extends Factory
             'total_amount' => $this->faker->numberBetween(100, 1000),
             'payment_status' => $this->faker->randomElement([0, 1]),
             'discount' => $this->faker->numberBetween(5, 10),
-            'booking_id' => Booking::inRandomOrder()->first()->id,
+            'booking_id' => Booking::all()->random()->id,
         ];
     }
 }

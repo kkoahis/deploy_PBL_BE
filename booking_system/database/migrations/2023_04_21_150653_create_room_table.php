@@ -18,10 +18,10 @@ return new class extends Migration
             $table->string('name');
             $table->float('size');
             $table->string('bed');
-            $table->longText('bathroom_facilities');
-            $table->longText('amenities');
-            $table->longText('directions_view');
-            $table->string('description');
+            $table->text('bathroom_facilities');
+            $table->text('amenities');
+            $table->text('directions_view');
+            $table->text('description');
             $table->double('price');
             $table->integer('max_people');
             // room status :true is available, false is not available

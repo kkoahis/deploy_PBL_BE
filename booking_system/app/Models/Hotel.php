@@ -15,15 +15,24 @@ class Hotel extends Model
 
     protected $fillable = [
         'name',
-        'address',
         'hotline',
         'email',
+        'price',
         'description',
+        'amenities',
+        'Safety_Hygiene',
+        'address',
+        'city',
+        'nation',
         'room_total',
         'parking_slot',
         'bathrooms',
         'rating',
         'created_by',
+        'check_in',
+        'check_out',
+        'guests',
+
     ];
 
     public function user()

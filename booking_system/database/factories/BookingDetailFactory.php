@@ -18,8 +18,9 @@ class BookingDetailFactory extends Factory
     public function definition(): array
     {
         return [
-            //
-            
+            //booking detail with bookingID available
+            'booking_id' => DB::table('booking')->inRandomOrder()->first()->id,
+            'room_id' => DB::table('room')->inRandomOrder()->first()->id,
         ];
     }
 }

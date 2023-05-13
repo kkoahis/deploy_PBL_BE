@@ -16,14 +16,29 @@ return new class extends Migration
             // create by user
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
             $table->string('name');
-            $table->string('email');
+            $table->string('email')->unique();
+            $table->double('price')->nullable();
             $table->longText('description')->nullable();
-            $table->string('address')->nullable();
-            $table->string('hotline')->nullable();
-            $table->integer('room_total')->nullable();
-            $table->unsignedInteger('parking_slot')->nullable();
-            $table->integer('bathrooms')->nullable();
+
+            $table->string('address');
+            $table->string('city');
+            $table->string('nation');
+
+            $table->string('hotline')->unique();
+            $table->integer('room_total');
+            $table->unsignedInteger('parking_slot');
+            $table->integer('bathrooms');
             $table->float('rating')->nullable();
+
+            $table->text('amenities');
+            $table->text('Safety_Hygiene');
+            // check-in date
+            $table->date('check_in')->nullable();
+            // check-out date
+            $table->date('check_out')->nullable();
+            // number of guests
+            $table->integer('guests')->nullable();
+
             $table->timestamps();
             // soft deletes
             $table->softDeletes();

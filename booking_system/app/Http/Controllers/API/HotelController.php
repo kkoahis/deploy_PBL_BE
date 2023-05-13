@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
 use App\Http\Controllers\API\BaseController as BaseController;
+use App\Http\Resources\BookingResource;
+use Monolog\Handler\SendGridHandler;
+use PhpParser\Node\Expr\FuncCall;
 
 class HotelController extends BaseController
 {
@@ -48,6 +51,15 @@ class HotelController extends BaseController
             'bathrooms' => 'required',
             // create_by has to be user admin in table users
             'created_by' => 'required',
+            'amenities' => 'required',
+            'Safety_Hygiene' => 'required',
+            'check_in',
+            'check_out',
+            'guests',
+            'city' => 'required',
+            'nation' => 'required',
+            'price',
+            // 'rating',
         ]);
 
         if ($validator->fails()) {
@@ -59,10 +71,11 @@ class HotelController extends BaseController
             return $this->sendError('User is not found.');
         }
         if ($user->role != 'admin') {
-            return $this->sendError('User is not admin.');
+            return $this->sendError('User created is not admin.');
         }
         if ($user->role == 'admin') {
             $hotel = Hotel::create($input);
+
             return $this->sendResponse(new HotelResource($hotel), 'Hotel created successfully.');
         }
     }
@@ -79,7 +92,14 @@ class HotelController extends BaseController
             'room_total',
             'parking_slot',
             'bathrooms',
-            // create_by user admin
+            'amenities',
+            'Safety_Hygiene',
+            'check_in',
+            'check_out',
+            'guests',
+            'city',
+            'nation',
+            'price',
         ]);
 
         if ($validator->fails()) {
@@ -98,6 +118,15 @@ class HotelController extends BaseController
         $hotel->room_total = $input['room_total'];
         $hotel->parking_slot = $input['parking_slot'];
         $hotel->bathrooms = $input['bathrooms'];
+        $hotel->amenities = $input['amenities'];
+        $hotel->Safety_Hygiene = $input['Safety_Hygiene'];
+        $hotel->check_in = $input['check_in'];
+        $hotel->check_out = $input['check_out'];
+        $hotel->guests = $input['guests'];
+        $hotel->city = $input['city'];
+        $hotel->nation = $input['nation'];
+        $hotel->price = $input['price'];
+
         if ($hotel->save()) {
             return response()->json(([
                     'success' => true,
@@ -273,5 +302,246 @@ class HotelController extends BaseController
         } else {
             return $this->sendError('Hotel not restored.');
         }
+    }
+
+    public function getHotelByName($name)
+    {
+        $hotel = Hotel::orderBy('name', 'asc')->where('name', 'like', '%' . $name . '%')->paginate(20);
+
+        if (is_null($hotel)) {
+            return $this->sendError('Hotel not found.');
+        }
+        return response()->json(([
+            'success' => true,
+            'message' => 'Hotel retrieved successfully.',
+            'data' => $hotel,
+        ]
+        ));
+    }
+
+    public function getHotelByAddress($address)
+    {
+        $hotel = Hotel::orderBy('address', 'asc')->where('address', 'like', '%' . $address . '%')->paginate(20);
+
+        if (is_null($hotel)) {
+            return $this->sendError('Hotel not found.');
+        }
+        return response()->json(([
+            'success' => true,
+            'message' => 'Hotel retrieved successfully.',
+            'data' => $hotel,
+        ]
+        ));
+    }
+
+    public function getHotelByCity($city)
+    {
+        $hotel = Hotel::orderBy('city', 'asc')->where('city', 'like', '%' . $city . '%')->paginate(20);
+
+        if (is_null($hotel)) {
+            return $this->sendError('Hotel not found.');
+        }
+        return response()->json(([
+            'success' => true,
+            'message' => 'Hotel retrieved successfully.',
+            'data' => $hotel,
+        ]
+        ));
+    }
+
+    public function getHotelByNation($nation)
+    {
+        $hotel = Hotel::orderBy('nation', 'asc')->where('nation', 'like', '%' . $nation . '%')->paginate(20);
+
+        if (is_null($hotel)) {
+            return $this->sendError('Hotel not found.');
+        }
+        return response()->json(([
+            'success' => true,
+            'message' => 'Hotel retrieved successfully.',
+            'data' => $hotel,
+        ]
+        ));
+    }
+
+    public function getHotelByPrice(Request $request)
+    {
+        $input = $request->all();
+        $validator = Validator::make($input, [
+            'min_price' => 'required|numeric',
+            'max_price' => 'required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError('Validation Error.', $validator->errors());
+        }
+
+        if ($input['min_price'] > $input['max_price']) {
+            return $this->sendError('Min price must be less than max price.');
+        }
+
+        if ($input['min_price'] < 0 || $input['max_price'] < 0) {
+            return $this->sendError('Price must be greater than 0.');
+        }
+
+        if ($input['min_price'] == $input['max_price']) {
+            return $this->sendError('Min price must be different from max price.');
+        }
+
+        if ($input['min_price'] == 0 && $input['max_price'] == 0) {
+            return $this->sendError('Min price and max price must be greater than 0.');
+        }
+
+        $hotel = Hotel::orderBy('price', 'asc')->whereBetween('price', [$input['min_price'], $input['max_price']])->with('hotelImage')->paginate(20);
+
+        if (is_null($hotel)) {
+            return $this->sendError('Hotel not found.');
+        }
+        return response()->json(([
+            'success' => true,
+            'message' => 'Hotel retrieved successfully.',
+            'data' => $hotel,
+        ]
+        ));
+    }
+
+    public function getHotelByCheckInAndCheckOut(Request $request)
+    {
+        $input = $request->all();
+        $validator = Validator::make($input, [
+            'check_in' => 'required|date',
+            'check_out' => 'required|date',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError('Validation Error.', $validator->errors());
+        }
+
+        if ($input['check_in'] > $input['check_out']) {
+            return $this->sendError('Check in must be less than check out.');
+        }
+
+        $hotel = Hotel::orderBy('check_in', 'asc')->whereBetween('check_in', [$input['check_in'], $input['check_out']])->with('hotelImage')->paginate(20);
+
+        if (is_null($hotel)) {
+            return $this->sendError('Hotel not found.');
+        }
+        return response()->json(([
+            'success' => true,
+            'message' => 'Hotel retrieved successfully.',
+            'data' => $hotel,
+        ]
+        ));
+    }
+
+    public function getHotelByGuests(Request $request)
+    {
+        $input = $request->all();
+        $validator = Validator::make($input, [
+            'guests' => 'required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError('Validation Error.', $validator->errors());
+        }
+
+        if ($input['guests'] < 0) {
+            return $this->sendError('Guests must be greater than 0.');
+        }
+
+        // get hotel with guests <= get column guests
+        $hotel = Hotel::orderBy('guests', 'asc')->where('guests', '>=', $input['guests'])->with('hotelImage')->paginate(20);
+
+        if (is_null($hotel)) {
+            return $this->sendError('Hotel not found.');
+        }
+        return response()->json(([
+            'success' => true,
+            'message' => 'Hotel retrieved successfully.',
+            'data' => $hotel,
+        ]
+        ));
+    }
+
+    public function getHotelByRating(Request $request)
+    {
+        $input = $request->all();
+        $validator = Validator::make($input, [
+            'rating' => 'required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError('Validation Error.', $validator->errors());
+        }
+
+        if ($input['rating'] < 0) {
+            return $this->sendError('Rating must be greater than 0.');
+        }
+
+        if ($input['rating'] > 5) {
+            return $this->sendError('Rating must be less than 5.');
+        }
+
+        // get hotel with rating >= get column rating
+        $hotel = Hotel::orderBy('rating', 'asc')->where('rating', '>=', $input['rating'])->with('hotelImage')->paginate(20);
+
+        if (is_null($hotel)) {
+            return $this->sendError('Hotel not found.');
+        }
+        return response()->json(([
+            'success' => true,
+            'message' => 'Hotel retrieved successfully.',
+            'data' => $hotel,
+        ]
+        ));
+    }
+
+    public function getHotelByAmenities(Request $request)
+    {
+        $input = $request->all();
+        $validator = Validator::make($input, [
+            'amenities' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError('Validation Error.', $validator->errors());
+        }
+
+        // get hotel with amenities like get column amenities
+        $hotel = Hotel::orderBy('amenities', 'asc')->where('amenities', 'like', '%' . $input['amenities'] . '%')->with('hotelImage')->paginate(20);
+
+        if (is_null($hotel)) {
+            return $this->sendError('Hotel not found.');
+        }
+        return response()->json(([
+            'success' => true,
+            'message' => 'Hotel retrieved successfully.',
+            'data' => $hotel,
+        ]
+        ));
+    }
+
+    public function getHotelBySafetyHygiene(Request $request)
+    {
+        $input = $request->all();
+        $validator = Validator::make($input, [
+            'Safety_Hygiene' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError('Validation Error.', $validator->errors());
+        }
+
+        $hotel = Hotel::orderBy('Safety_Hygiene', 'asc')->where('Safety_Hygiene', 'like', '%' . $input['Safety_Hygiene'] . '%')->with('hotelImage')->paginate(20);
+
+        if (is_null($hotel)) {
+            return $this->sendError('Hotel not found.');
+        }
+        return response()->json(([
+            'success' => true,
+            'message' => 'Hotel retrieved successfully.',
+            'data' => $hotel,
+        ]
+        ));
     }
 }

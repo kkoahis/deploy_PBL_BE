@@ -14,6 +14,6 @@ class PaymentSeeder extends Seeder
     public function run(): void
     {
         //each payment has only one booking
-        Payment::factory()->count(3)->create();
+        Payment::factory()->count(1000)->create();
     }
 }

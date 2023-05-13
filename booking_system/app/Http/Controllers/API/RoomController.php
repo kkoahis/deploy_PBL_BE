@@ -181,4 +181,102 @@ class RoomController extends BaseController
             return $this->sendError('Room not restored.');
         }
     }
+
+    public function getRoomByHotelId($id)
+    {
+        $category = Category::where('hotel_id', $id)->get();
+        if (is_null($category)) {
+            return $this->sendError('Category not found.');
+        }
+
+        $rooms = [];
+        if ($category->count() > 0) {
+            foreach ($category as $c) {
+                $room = Room::where('category_id', $c->id)->get();
+                if ($room->count() > 0) {
+                    foreach ($room as $r) {
+                        array_push($rooms, $r);
+                    }
+                }
+            }
+            return response()->json($rooms);
+        } else {
+            return $this->sendError('Room not found.');
+        }
+    }
+
+    public function getPriceByRoomId($id)
+    {
+        $room = Room::find($id);
+
+        if (is_null($room)) {
+            return $this->sendError('Room not found.');
+        }
+
+        return response()->json($room->price);
+    }
+
+    // get array of price of room by hotel id
+    public function getAllPriceByHotelId($id){
+        $category = Category::where('hotel_id', $id)->get();
+        if (is_null($category)) {
+            return $this->sendError('Category not found.');
+        }
+
+        $rooms = [];
+        if ($category->count() > 0) {
+            foreach ($category as $c) {
+                $room = Room::where('category_id', $c->id)->get();
+                if ($room->count() > 0) {
+                    foreach ($room as $r) {
+                        array_push($rooms, $r->price);
+                    }
+                }
+            }
+            return response()->json([
+                'success' => true,
+                'message' => 'Hotel retrieved successfully.',
+                'data' => $rooms,
+            ]);
+        } else {
+            return $this->sendError('Hotel ID not found.');
+        }
+    }
+
+    public function CountRoomByCategoryId($id)
+    {
+        $room = Room::where('category_id', $id)->get()->count();
+        if (is_null($room)) {
+            return $this->sendError('Room not found.');
+        }
+        return response()->json($room);
+    }
+
+    public function updatePriceByRoomId(Request $request, $id)
+    {
+        $input = $request->all();
+        $validator = Validator::make($input, [
+            'price' =>  "required|numeric",
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError('Validation Error.', $validator->errors());
+        }
+        $room = Room::find($id);
+        if (is_null($room)) {
+            return $this->sendError('Room not found.');
+        }
+
+        $room->price = $input['price'];
+
+        if ($room->save()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Room updated successfully.',
+                'data' => $room,
+            ]);
+        } else {
+            return $this->sendError('Room not updated.');
+        }
+    }
 }

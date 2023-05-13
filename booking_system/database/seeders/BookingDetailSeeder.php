@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\BookingDetail;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -13,11 +14,6 @@ class BookingDetailSeeder extends Seeder
      */
     public function run(): void
     {
-        //
-        DB::table('booking_detail')->insert([
-            'booking_id' => 3,
-            'room_id' => 34,
-            'created_at' => now(),
-        ]);
+        BookingDetail::factory()->count(1000)->create();
     }
 }
