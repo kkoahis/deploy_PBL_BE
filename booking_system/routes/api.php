@@ -62,13 +62,10 @@ Route::prefix('hotel-images')->group(function () {
 
 // hotel images API
 Route::middleware(['auth:sanctum', 'verified', 'role:hotel'])->prefix('hotel-images')->group(function () {
-    Route::get('hotel-images', [HotelImageController::class, 'index']);
-    Route::get('hotel-images/{id}', [HotelImageController::class, 'show']);
     Route::post('/', [HotelImageController::class, 'store']);
     Route::put('/{id}', [HotelImageController::class, 'update']);
     Route::delete('/{id}', [HotelImageController::class, 'destroy']);
 
-    Route::get('hotel-images/hotel/{id}', [HotelImageController::class, 'getImageByHotelId']);
     Route::delete('/hotel/{id}', [HotelImageController::class, 'deleteImageByHotelId']);
     Route::put('/hotel/{id}', [HotelImageController::class, 'restoreByHotelId']);
 });

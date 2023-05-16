@@ -35,11 +35,11 @@ class Hotel extends Model
 
     ];
 
-    public function user()
-    {
-        // hotel create by user has role admin
-        return $this->belongsTo(User::class, 'created_by', 'id')->where('role', 'admin');
-    }
+    // public function user()
+    // {
+    //     // hotel create by user has role admin
+    //     return $this->belongsTo(User::class, 'created_by', 'id')->where('role', 'hotel');
+    // }
 
     public function booking()
     {
